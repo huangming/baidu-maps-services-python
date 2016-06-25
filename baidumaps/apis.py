@@ -8,6 +8,8 @@
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import sys
+PY2 = sys.version[0] == '2'
 import re
 
 
@@ -303,7 +305,10 @@ def direct(client, origin, destination, mode='driving', region=None,
     CN_pattern = re.compile(u'[\u4e00-\u9fa5]+')
 
     if isinstance(origin, str):
-        u_origin = origin.decode('utf-8')
+        if PY2:
+            u_origin = origin.decode('utf-8')
+        else:
+            u_origin = origin
         match = CN_pattern.search(u_origin)
         if not match:
             origin = ','.join(origin.split(',')[::-1])
@@ -314,7 +319,10 @@ def direct(client, origin, destination, mode='driving', region=None,
         raise ValueError('"origin"  must be a str or list instance!')
 
     if isinstance(destination, str):
-        u_destination = destination.decode('utf-8')
+        if PY2:
+            u_destination = destination.decode('utf-8')
+        else:
+            u_destination = destination
         match = CN_pattern.search(u_destination)
         if not match:
             destination = ','.join(destination.split(',')[::-1])
@@ -391,7 +399,8 @@ def route_matrix(client, origins, destinations, **kwargs):
         raise ValueError('"origins" must be str or list!')
     elif is_origins_str:
         sep_origins = sep_pattern.split(origins)
-        u_origins = origins.decode('utf-8')
+        # u_origins = origins.decode('utf-8')
+        u_origins = origins
         CN_pattern = re.compile(u'[\u4e00-\u9fa5]+')
         match = CN_pattern.search(u_origins)
         if match:
@@ -423,7 +432,8 @@ def route_matrix(client, origins, destinations, **kwargs):
         raise ValueError('"destinations" must be str or list!')
     elif is_destinations_str:
         sep_destinations = sep_pattern.split(destinations)
-        u_destinations = destinations.decode('utf-8')
+        # u_destinations = destinations.decode('utf-8')
+        u_destinations = destinations
         CN_pattern = re.compile(u'[\u4e00-\u9fa5]+')
         match = CN_pattern.search(u_destinations)
         if match:
@@ -490,3 +500,4 @@ def geoconv(client, coords, **kwargs):
                   'subserver_name': '', 'coords': coords})
 
     return client.get(kwargs)
+

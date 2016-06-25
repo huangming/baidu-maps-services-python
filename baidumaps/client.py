@@ -8,13 +8,19 @@
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import sys
+PY2 = sys.version[0] == '2'
 import urllib
+if not PY2: import urllib.parse
 import requests
 import re
 import baidumaps
 from baidumaps import apis
 from baidumaps import exceptions
 from baidumaps import parse
+# import apis
+# import exceptions
+# import parse
 
 
 class Client(object):
@@ -57,7 +63,8 @@ class Client(object):
         temp = params.copy()    # avoid altering argument 'params'
         {temp.pop(key) for key in ['server_name', 'version', 'subserver_name']}
         temp.update({'ak': self.ak, 'output': self.output})
-        addi_url = urllib.urlencode(temp)
+        addi_url = urllib.urlencode(temp) if PY2 else urllib.parse.urlencode(temp)
+        # addi_url = urllib.urlencode(temp)
 
         return base_url + addi_url
 
@@ -75,7 +82,36 @@ Client.geoconv = apis.geoconv
 Client.parse = parse.parse
 
 
-# if __name__ == "__main__":
-    # bdmaps = Client(ak='<Your Baidu Auth Key>')
+if __name__ == "__main__":
+    bdmaps = Client(ak='cQlzSOBQEZGTbhHTbeUMcTU62vakzrvF')
     # result = bdmaps.geoconv('114.21892734521,29.575429778924')
-    # print result
+    result = bdmaps.direct('华翰科技','侯斯顿','transit',region='深圳')
+    mymsg = ''
+    content = ''
+    for i in range(len(result['routes'])):
+        scheme = result['routes'][i]
+        content += '[方案%d]: 从华翰科技'%(i+1)
+        timeout = 0
+        for steplist in scheme['steps']:
+            step = steplist[0]
+            if step['type']==5:
+                content += ' '
+                if PY2:
+                    content += step['stepInstruction'].encode('utf-8')
+                else:
+                    content += step['stepInstruction']
+                content += ' '
+            elif step['type']==3:
+                pattern = '''<font[.\n]*?color=.*?>'''
+                stepinfo = re.sub(pattern,'',step['stepInstruction'])
+                pattern = '''</font>'''
+                stepinfo = re.sub(pattern,'',stepinfo)
+                pattern = '''<font color=.*?>'''
+                stepinfo = re.sub(pattern,'',stepinfo)
+                if PY2:
+                    content += stepinfo.encode('utf-8')
+                else:
+                    content += stepinfo
+            timeout += step['duration']
+        content += ' 用时%d分钟\n'%(timeout/60)
+    print(content)
